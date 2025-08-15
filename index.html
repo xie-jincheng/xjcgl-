@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DISC性格测试</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        .instructions {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .question {
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        .question-number {
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+        .options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        .option {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .option:hover {
+            background-color: #f0f7ff;
+            border-color: #3498db;
+        }
+        .option.selected {
+            background-color: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+        .option-letter {
+            font-weight: bold;
+            margin-right: 8px;
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            text-align: center;
+            line-height: 20px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+        }
+        .option.selected .option-letter {
+            background-color: white;
+            color: #3498db;
+        }
+        .submit-btn {
+            display: block;
+            width: 200px;
+            margin: 30px auto;
+            padding: 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .submit-btn:hover {
+            background-color: #2980b9;
+        }
+        .results {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+        .result-chart {
+            width: 100%;
+            height: 300px;
+            margin: 20px 0;
+        }
+        .result-item {
+            margin: 10px 0;
+        }
+        .result-bar {
+            height: 25px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 5px;
+        }
+        .d-fill { background-color: #e74c3c; }
+        .i-fill { background-color: #f1c40f; }
+        .s-fill { background-color: #2ecc71; }
+        .c-fill { background-color: #3498db; }
+        .share-section {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .loading {
+            text-align: center;
+            display: none;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>DISC性格测试</h1>
+        <p>请选择最符合您自己的选项（共40题）</p>
+    </div>
+
+    <div class="instructions">
+        <p>说明：在每一个问题中的四个选择题中只选择一个最符合或最接近您自己的选项。</p>
+        <p>完成后点击"查看结果"按钮，系统将自动统计您的D、I、S、C类型分布。</p>
+    </div>
+
+    <div id="test-container">
+        <!-- 问题将通过JavaScript动态生成 -->
+    </div>
+
+    <button id="submit-btn" class="submit-btn">查看结果</button>
+
+    <div id="results" class="results">
+        <h2>测试结果</h2>
+        <p>您的DISC性格类型分布如下：</p>
+        
+        <div class="result-item">
+            <div>D (支配型): <span id="d-count"></span></div>
+            <div class="result-bar">
+                <div id="d-bar" class="bar-fill d-fill" style="width: 0%"></div>
+            </div>
+        </div>
+        
+        <div class="result-item">
+            <div>I (影响型): <span id="i-count"></span></div>
+            <div class="result-bar">
+                <div id="i-bar" class="bar-fill i-fill" style="width: 0%"></div>
+            </div>
+        </div>
+        
+        <div class="result-item">
+            <div>S (稳健型): <span id="s-count"></span></div>
+            <div class="result-bar">
+                <div id="s-bar" class="bar-fill s-fill" style="width: 0%"></div>
+            </div>
+        </div>
+        
+        <div class="result-item">
+            <div>C (谨慎型): <span id="c-count"></span></div>
+            <div class="result-bar">
+                <div id="c-bar" class="bar-fill c-fill" style="width: 0%"></div>
+            </div>
+        </div>
+        
+        <div id="result-description" style="margin-top: 20px; padding: 15px; background-color: #e8f4fc; border-radius: 5px;"></div>
+        
+        <div class="share-section">
+            <p>您可以截图保存您的测试结果</p>
+            <button id="restart-btn" class="submit-btn" style="background-color: #2ecc71;">重新测试</button>
+        </div>
+    </div>
+    
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>正在计算结果...</p>
+    </div>
+
+    <script>
+        // DISC测试问题数据
+        const questions = [
+            {
+                number: "一",
+                options: [
+                    { type: "D", text: "愿意面对新事物并敢于下决心掌握的人" },
+                    { type: "I", text: "充满活力,表情生动,多手势" },
+                    { type: "S", text: "轻松自如适应任何环境" },
+                    { type: "C", text: "喜欢研究各部分之间的逻辑和正确的关系" }
+                ]
+            },
+            {
+                number: "二",
+                options: [
+                    { type: "C", text: "要完成现有的事才能做新的事情" },
+                    { type: "I", text: "开心充满乐趣与幽默感" },
+                    { type: "D", text: "用逻辑和事实而不用威严和权力服人" },
+                    { type: "S", text: "在冲突中不受干扰，保持平静" }
+                ]
+            },
+            {
+                number: "三",
+                options: [
+                    { type: "S", text: "易接受他人的观点和喜好，不坚持己见" },
+                    { type: "C", text: "因他人更有依据的理由，愿意放弃个人意见" },
+                    { type: "I", text: "认为与人相处是好玩，而不是挑战或者商业机会" },
+                    { type: "D", text: "决心以自己的方式做事" }
+                ]
+            },
+            {
+                number: "四",
+                options: [
+                    { type: "I", text: "因人格魅力或性格使人认同" },
+                    { type: "C", text: "关心别人的感受与需要，但更常评价其合理性" },
+                    { type: "D", text: "把一切当作竞赛，总是有强烈的赢的欲望" },
+                    { type: "S", text: "控制自己的情感，较少流露" }
+                ]
+            },
+            {
+                number: "五",
+                options: [
+                    { type: "I", text: "给他人清新振奋的刺激" },
+                    { type: "C", text: "对人诚实尊重" },
+                    { type: "D", text: "对任何情况都能做出有效的反应" },
+                    { type: "S", text: "自我约束情绪与热忱" }
+                ]
+            },
+            {
+                number: "六",
+                options: [
+                    { type: "I", text: "充满生命力与兴奋" },
+                    { type: "S", text: "容易接受任何情况与环境" },
+                    { type: "C", text: "对周围的人和事经常处于评价状态" },
+                    { type: "D", text: "独立性强，只依靠自己的能力、判断与才智" }
+                ]
+            },
+            {
+                number: "七",
+                options: [
+                    { type: "C", text: "先做详尽的计划，并严格按计划进行，不想改动" },
+                    { type: "S", text: "不因延误而懊恼，冷静且能容忍" },
+                    { type: "D", text: "相信自己有转危为安的能力" },
+                    { type: "I", text: "动用性格魅力或鼓励别人参与" }
+                ]
+            },
+            {
+                number: "八",
+                options: [
+                    { type: "D", text: "自信，极少犹豫或者动摇" },
+                    { type: "I", text: "不喜欢预先计划，或者被计划牵制" },
+                    { type: "S", text: "安静，不善于交谈" },
+                    { type: "C", text: "生活处事依靠时间表，不喜欢计划被人干扰" }
+                ]
+            },
+            {
+                number: "九",
+                options: [
+                    { type: "S", text: "改变自己以与他人协调，短时间内按他人要求行事" },
+                    { type: "C", text: "有系统有条理安排事情" },
+                    { type: "I", text: "毫无保留，坦率发言" },
+                    { type: "D", text: "令他人和自己相信任何事情都会好转" }
+                ]
+            },
+            {
+                number: "十",
+                options: [
+                    { type: "D", text: "发号施令，强迫他人听从" },
+                    { type: "C", text: "一贯可靠，忠心不移，有时毫无根据地奉献" },
+                    { type: "I", text: "风趣，幽默，把任何事物都能变成精彩的故事" },
+                    { type: "S", text: "不主动交谈，不爱争论" }
+                ]
+            },
+            {
+                number: "十一",
+                options: [
+                    { type: "D", text: "敢于冒险，无所畏惧" },
+                    { type: "S", text: "待人得体，有耐心" },
+                    { type: "C", text: "观察入微，做事情有条不紊" },
+                    { type: "I", text: "开心，与他人相处充满乐趣" }
+                ]
+            },
+            {
+                number: "十二",
+                options: [
+                    { type: "I", text: "充满活力，并将快乐传于他人" },
+                    { type: "C", text: "对艺术学术特别爱好，如戏剧、交响乐" },
+                    { type: "D", text: "确信自己个人能力与成功" },
+                    { type: "S", text: "情绪平稳，做事情坚持不懈" }
+                ]
+            },
+            {
+                number: "十三",
+                options: [
+                    { type: "C", text: "以自己完美的标准来设想衡量新事物" },
+                    { type: "D", text: "自给自足，独立自信，不需要他人帮忙" },
+                    { type: "S", text: "不说不做可能引起别人不满和反对的事情" },
+                    { type: "I", text: "鼓励别人参与、加入，并把每件事情变得有趣" }
+                ]
+            },
+            {
+                number: "十四",
+                options: [
+                    { type: "I", text: "从不掩饰情感、喜好，交谈时常身不由己接触他人" },
+                    { type: "C", text: "深刻并常常内省，对肤浅的交谈、消遣会厌恶" },
+                    { type: "D", text: "有很快做出判断与结论的能力" },
+                    { type: "S", text: "语气平和而有冷静的幽默" }
+                ]
+            },
+            {
+                number: "十五",
+                options: [
+                    { type: "S", text: "经常居中调节不同的意见，以避免双方的冲突" },
+                    { type: "C", text: "爱好参与并有较深的鉴赏能力，因音乐的艺术性,而不是因为表演的乐趣" },
+                    { type: "D", text: "高效率的推动者，是他人的领导者，闲不住" },
+                    { type: "I", text: "喜欢周旋聚会中，善交新朋友，不把任何人当陌生人" }
+                ]
+            },
+            {
+                number: "十六",
+                options: [
+                    { type: "C", text: "善解人意，帮助别人，记住特别的日子" },
+                    { type: "D", text: "不达目的，誓不罢休" },
+                    { type: "I", text: "不断的说话、讲笑话以娱乐他人，觉得应该避免沉默而带来的尴尬" },
+                    { type: "S", text: "易接受别人的想法和看法，不需要反对或改变他人" }
+                ]
+            },
+            {
+                number: "十七",
+                options: [
+                    { type: "S", text: "愿意听别人倾诉" },
+                    { type: "C", text: "对自己的理想、朋友、工作都绝对忠实，有时甚至不需要理由" },
+                    { type: "D", text: "天生的领导，不相信别人的能力能比上自己" },
+                    { type: "I", text: "充满活力，精力充沛" }
+                ]
+            },
+            {
+                number: "十八",
+                options: [
+                    { type: "S", text: "满足自己拥有的，很少羡慕别人" },
+                    { type: "D", text: "要求领导地位及别人跟随" },
+                    { type: "C", text: "用图表数字来组织生活，解决问题" },
+                    { type: "I", text: "人们注意的中心，令人喜欢" }
+                ]
+            },
+            {
+                number: "十九",
+                options: [
+                    { type: "C", text: "对自己、对别人都高标准，一切事物有秩序" },
+                    { type: "S", text: "易相处，易说话，易让人接近" },
+                    { type: "D", text: "不停的'工作，完成任务，不愿意休息" },
+                    { type: "I", text: "聚会时的灵魂人物，受欢迎的宾客" }
+                ]
+            },
+            {
+                number: "二十",
+                options: [
+                    { type: "I", text: "充满活力和生气勃勃" },
+                    { type: "D", text: "大胆前进，不怕冒险" },
+                    { type: "C", text: "时时坚持自己的举止合乎认同的道德规范" },
+                    { type: "S", text: "稳定，走中间路线" }
+                ]
+            },
+            {
+                number: "二十一",
+                options: [
+                    { type: "S", text: "死气沉沉，缺乏生气" },
+                    { type: "C", text: "躲避别人的注意力，在众人注意下不自然" },
+                    { type: "I", text: "好表现，华而不实，声音大" },
+                    { type: "D", text: "喜命令支配，有时略显傲慢" }
+                ]
+            },
+            {
+                number: "二十二",
+                options: [
+                    { type: "I", text: "生活任性,无秩序" },
+                    { type: "D", text: "不易理解别人的问题和麻烦" },
+                    { type: "S", text: "不易兴奋，经常感到好事难做" },
+                    { type: "C", text: "不易宽恕和忘记别人对自己的伤害，易嫉妒" }
+                ]
+            },
+            {
+                number: "二十三",
+                options: [
+                    { type: "S", text: "不愿意参与，尤其是当事情复杂时" },
+                    { type: "C", text: "把实际或者自己想象的别人的冒犯经常放在心中" },
+                    { type: "D", text: "抗拒、或者拒不接受别人的方法，固执己见" },
+                    { type: "I", text: "重复讲同一件事情或故事，忘记已经重复多次，总是不断找话题说话" }
+                ]
+            },
+            {
+                number: "二十四",
+                options: [
+                    { type: "C", text: "坚持琐事细节，总喜欢挑不足" },
+                    { type: "S", text: "经常感到强烈的担心焦虑、悲戚" },
+                    { type: "I", text: "缺乏自我约束，导致健忘，不愿意回忆无趣的事情" },
+                    { type: "D", text: "直言不讳，直接表达自己的看法" }
+                ]
+            },
+            {
+                number: "二十五",
+                options: [
+                    { type: "D", text: "难以忍受等待别人" },
+                    { type: "S", text: "感到担心且无自信心" },
+                    { type: "C", text: "很难下决定" },
+                    { type: "I", text: "一个滔滔不绝的发言人，不是好听众，不注意别人的说话" }
+                ]
+            },
+            {
+                number: "二十六",
+                options: [
+                    { type: "C", text: "由于强烈要求完美，而拒人千里" },
+                    { type: "S", text: "不愿意加入，不参与，对别人生活不感兴趣" },
+                    { type: "I", text: "时而兴奋，时而低落，或总是不兑现诺言" },
+                    { type: "D", text: "很难当众表达对弱者或者能力不足者的同理心" }
+                ]
+            },
+            {
+                number: "二十七",
+                options: [
+                    { type: "D", text: "坚持照自己的意见行事，不听不同意见" },
+                    { type: "I", text: "做事情没有一贯性，随意做事情" },
+                    { type: "C", text: "因为要求太高而使别人很难取悦" },
+                    { type: "S", text: "迟迟才行动，不易参与或者行动总是慢半拍" }
+                ]
+            },
+            {
+                number: "二十八",
+                options: [
+                    { type: "S", text: "平实淡漠，中间路线，无高低之分，很少表露情感" },
+                    { type: "C", text: "尽管期待最好但往往首先看到事物不利之处" },
+                    { type: "D", text: "自我评价高，认为自己是最好的人选" },
+                    { type: "I", text: "允许别人做他喜欢做的事情，为的是讨好别人，令别人鼓吹自己" }
+                ]
+            },
+            {
+                number: "二十九",
+                options: [
+                    { type: "I", text: "善变，孩子性格，易激动，过后马上就忘了" },
+                    { type: "S", text: "不喜欢目标，也无意制定目标" },
+                    { type: "D", text: "易与人争吵，不管对何事都觉得自己是对的" },
+                    { type: "C", text: "容易感到被疏离，经常没有安全感或担心别人不喜欢和自己相处" }
+                ]
+            },
+            {
+                number: "三十",
+                options: [
+                    { type: "I", text: "孩子般的单纯，不理解生命的真谛" },
+                    { type: "C", text: "往往看到事物的消极面、阴暗面，而少有积极的态度" },
+                    { type: "D", text: "充满自信有胆识，但总是不恰当" },
+                    { type: "S", text: "漠不关心，得过且过" }
+                ]
+            },
+            {
+                number: "三十一",
+                options: [
+                    { type: "S", text: "时时感到不确定、焦虑、心烦" },
+                    { type: "C", text: "总喜欢挑人毛病，不被人喜欢" },
+                    { type: "D", text: "为了回报或成就感，而不是为了完美，因而设立雄伟目标不断工作，耻于休息" },
+                    { type: "I", text: "需要旁人认同赞赏，像演员" }
+                ]
+            },
+            {
+                number: "三十二",
+                options: [
+                    { type: "C", text: "对事物过分反应，被人误解时感到被冒犯" },
+                    { type: "D", text: "经常用冒犯或考虑不周的方式表达自己" },
+                    { type: "S", text: "遇到困难退缩" },
+                    { type: "I", text: "难以自控，滔滔不绝，不能倾听别人" }
+                ]
+            },
+            {
+                number: "三十三",
+                options: [
+                    { type: "S", text: "事事不确定，对所做的事情缺乏信心" },
+                    { type: "I", text: "缺乏安排生活的能力" },
+                    { type: "D", text: "冲动的控制事物和别人，指挥他人" },
+                    { type: "C", text: "常常情绪低落" }
+                ]
+            },
+            {
+                number: "三十四",
+                options: [
+                    { type: "I", text: "反复无常，互相矛盾，情绪与行动不合逻辑" },
+                    { type: "C", text: "活在自己的世界里，思想和兴趣放在心里" },
+                    { type: "D", text: "不能忍受他人的观点、态度和做事的方式" },
+                    { type: "S", text: "对很多事情漠不关心" }
+                ]
+            },
+            {
+                number: "三十五",
+                options: [
+                    { type: "I", text: "生活环境无秩序，经常找不到东西" },
+                    { type: "C", text: "情绪不易高涨，感到不被欣赏时很容易低落" },
+                    { type: "S", text: "低声说话，不在乎说不清楚" },
+                    { type: "D", text: "精明处事，操纵事情，使对自己有利" }
+                ]
+            },
+            {
+                number: "三十六",
+                options: [
+                    { type: "S", text: "行动思想均比较慢，不愿意冒头" },
+                    { type: "D", text: "决心依自己的意愿行事，不易被说服" },
+                    { type: "I", text: "要吸引人，需要自己成为被人注意的中心" },
+                    { type: "C", text: "不易相信，对语言背后的真正的动机存在疑问" }
+                ]
+            },
+            {
+                number: "三十七",
+                options: [
+                    { type: "C", text: "需要大量的时间独处，避开人群" },
+                    { type: "D", text: "毫不犹豫地表示自己的正确或控制能力" },
+                    { type: "S", text: "总是先估量事情要耗费多少精力，能不做最好" },
+                    { type: "I", text: "说话声和笑声总盖过他人" }
+                ]
+            },
+            {
+                number: "三十八",
+                options: [
+                    { type: "S", text: "凡事起步慢，需要推动力" },
+                    { type: "C", text: "凡事怀疑，不相信别人" },
+                    { type: "D", text: "对行动不快或不能完成指定工作，易烦躁和发怒" },
+                    { type: "I", text: "无法专心致志或者集中精力" }
+                ]
+            },
+            {
+                number: "三十九",
+                options: [
+                    { type: "C", text: "记恨并惩罚冒犯自己的人" },
+                    { type: "I", text: "喜新厌旧，不喜欢长时间做相同的事情" },
+                    { type: "S", text: "不愿意参与或者投入" },
+                    { type: "D", text: "因没有耐心，不经思考，草率行动" }
+                ]
+            },
+            {
+                number: "四十",
+                options: [
+                    { type: "S", text: "为避免矛盾即使自己是对的，也不惜放弃自己的立场" },
+                    { type: "C", text: "不断地衡量和下判断，经常考虑提出反对意见" },
+                    { type: "D", text: "精明，总是有办法达到目的" },
+                    { type: "I", text: "像孩子般注意力短暂，需要各种变化，怕无聊" }
+                ]
+            }
+        ];
+
+        // 用于存储用户的选择
+        let userSelections = Array(questions.length).fill(null);
+
+        // 生成问题
+        function generateQuestions() {
+            const container = document.getElementById('test-container');
+            
+            questions.forEach((question, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+                questionDiv.innerHTML = `
+                    <div class="question-number">问题 ${index + 1}（${question.number}）</div>
+                    <div class="options" id="options-${index}">
+                        ${question.options.map((option, optIndex) => `
+                            <div class="option" data-type="${option.type}" data-question="${index}" data-option="${optIndex}">
+                                <span class="option-letter">${option.type}</span> ${option.text}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                container.appendChild(questionDiv);
+            });
+            
+            // 添加事件监听器
+            document.querySelectorAll('.option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const questionIndex = parseInt(this.getAttribute('data-question'));
+                    const options = document.querySelectorAll(`#options-${questionIndex} .option`);
+                    
+                    options.forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    this.classList.add('selected');
+                    userSelections[questionIndex] = this.getAttribute('data-type');
+                });
+            });
+        }
+
+        // 计算结果
+        function calculateResults() {
+            // 检查是否所有问题都已回答
+            if (userSelections.some(selection => selection === null)) {
+                alert('请完成所有问题后再查看结果！');
+                return false;
+            }
+            
+            // 显示加载状态
+            document.getElementById('submit-btn').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            
+            // 计算D、I、S、C的数量
+            const counts = {
+                D: 0,
+                I: 0,
+                S: 0,
+                C: 0
+            };
+            
+            userSelections.forEach(selection => {
+                if (selection) {
+                    counts[selection]++;
+                }
+            });
+            
+            // 模拟计算过程（实际中可以立即显示，这里加个延迟让用户体验更好）
+            setTimeout(() => {
+                // 隐藏加载状态
+                document.getElementById('loading').style.display = 'none';
+                
+                // 显示结果
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('d-count').textContent = counts.D;
+                document.getElementById('i-count').textContent = counts.I;
+                document.getElementById('s-count').textContent = counts.S;
+                document.getElementById('c-count').textContent = counts.C;
+                
+                // 计算百分比并设置条形图
+                const total = questions.length;
+                document.getElementById('d-bar').style.width = `${(counts.D / total) * 100}%`;
+                document.getElementById('i-bar').style.width = `${(counts.I / total) * 100}%`;
+                document.getElementById('s-bar').style.width = `${(counts.S / total) * 100}%`;
+                document.getElementById('c-bar').style.width = `${(counts.C / total) * 100}%`;
+                
+                // 生成结果描述
+                generateResultDescription(counts);
+                
+                // 滚动到结果部分
+                document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+            }, 800);
+            
+            return true;
+        }
+
+        // 生成结果描述
+        function generateResultDescription(counts) {
+            const resultDesc = document.getElementById('result-description');
+            
+            // 找出主要类型
+            const sortedCounts = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+            const primaryType = sortedCounts[0][0];
+            const secondaryType = sortedCounts[1][0];
+            
+            let description = '';
+            
+            switch(primaryType) {
+                case 'D':
+                    description = '<strong>支配型 (Dominance)</strong><br>';
+                    description += '您是一个目标导向、自信果断的人。您喜欢挑战，善于解决问题，注重结果而非过程。';
+                    if (counts.I > counts.S && counts.I > counts.C) {
+                        description += ' 您也具有较强的影响力，善于表达和影响他人。';
+                    } else if (counts.S > counts.I && counts.S > counts.C) {
+                        description += ' 您也有稳健的特质，能够耐心处理事务。';
+                    } else if (counts.C > counts.I && counts.C > counts.S) {
+                        description += ' 您也注重细节和准确性，做事有条理。';
+                    }
+                    break;
+                case 'I':
+                    description = '<strong>影响型 (Influence)</strong><br>';
+                    description += '您是一个热情开朗、善于交际的人。您充满活力，喜欢与人互动，具有很强的影响力和感染力。';
+                    if (counts.D > counts.S && counts.D > counts.C) {
+                        description += ' 您也有很强的目标导向和决断力。';
+                    } else if (counts.S > counts.D && counts.S > counts.C) {
+                        description += ' 您也具有稳健的特质，能够耐心倾听他人。';
+                    } else if (counts.C > counts.D && counts.C > counts.S) {
+                        description += ' 您也注重逻辑和细节，善于分析。';
+                    }
+                    break;
+                case 'S':
+                    description = '<strong>稳健型 (Steadiness)</strong><br>';
+                    description += '您是一个平和稳定、耐心可靠的人。您善于倾听，注重和谐，做事有耐心且可靠。';
+                    if (counts.D > counts.I && counts.D > counts.C) {
+                        description += ' 您也有目标导向的特质，能够果断决策。';
+                    } else if (counts.I > counts.D && counts.I > counts.C) {
+                        description += ' 您也具有影响力，善于与人交流互动。';
+                    } else if (counts.C > counts.D && counts.C > counts.I) {
+                        description += ' 您也注重细节和准确性，做事有条理。';
+                    }
+                    break;
+                case 'C':
+                    description = '<strong>谨慎型 (Compliance)</strong><br>';
+                    description += '您是一个严谨细致、注重规则的人。您追求准确和完美，善于分析和思考，做事有条理。';
+                    if (counts.D > counts.I && counts.D > counts.S) {
+                        description += ' 您也有目标导向的特质，能够果断决策。';
+                    } else if (counts.I > counts.D && counts.I > counts.S) {
+                        description += ' 您也具有影响力，善于表达和影响他人。';
+                    } else if (counts.S > counts.D && counts.S > counts.I) {
+                        description += ' 您也具有稳健的特质，能够耐心处理事务。';
+                    }
+                    break;
+            }
+            
+            // 添加组合描述
+            description += `<br><br>您的主要性格类型是 <strong>${primaryType}</strong>，次要类型是 <strong>${secondaryType}</strong>。`;
+            
+            // 添加一般建议
+            description += '<br><br>注意：DISC测试仅作为了解自己和他人的参考工具，不能完全定义一个人。';
+            
+            resultDesc.innerHTML = description;
+        }
+
+        // 重新开始测试
+        function restartTest() {
+            // 重置选择
+            userSelections = Array(questions.length).fill(null);
+            
+            // 重置UI
+            document.querySelectorAll('.option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // 隐藏结果
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('submit-btn').style.display = 'block';
+            
+            // 滚动到顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            generateQuestions();
+            
+            // 添加提交按钮事件
+            document.getElementById('submit-btn').addEventListener('click', calculateResults);
+            
+            // 添加重新测试按钮事件
+            document.getElementById('restart-btn').addEventListener('click', restartTest);
+        });
+    </script>
+</body>
+</html>
